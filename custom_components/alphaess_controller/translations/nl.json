@@ -1,0 +1,51 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "AlphaESS Modbus Controller",
+        "description": "Verbind met je AlphaESS-omvormer via lokale Modbus TCP. Modbus moet aan staan op de omvormer (bedraad ethernet, poort 502).",
+        "data": {
+          "host": "IP-adres omvormer",
+          "port": "Modbus TCP-poort",
+          "unit": "Modbus slave-id",
+          "soc_sensor": "Accu-laadtoestand-sensor (%)",
+          "price_sensor": "Stroomprijs-sensor (€/kWh)",
+          "price_threshold": "Zet PV uit onder deze prijs (€/kWh)",
+          "battery_mode": "Accu terwijl PV uit is",
+          "battery_power": "Laad-/ontlaadvermogen (W)",
+          "discharge_soc_floor": "Niet ontladen onder deze SOC (%)",
+          "poll_interval": "Poll-interval (seconden)"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Deze omvormer is al geconfigureerd."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "AlphaESS Modbus Controller opties",
+        "data": {
+          "price_sensor": "Stroomprijs-sensor (€/kWh)",
+          "soc_sensor": "Accu-laadtoestand-sensor (%)",
+          "price_threshold": "Zet PV uit onder deze prijs (€/kWh)",
+          "battery_mode": "Accu terwijl PV uit is",
+          "battery_power": "Laad-/ontlaadvermogen (W)",
+          "discharge_soc_floor": "Niet ontladen onder deze SOC (%)",
+          "poll_interval": "Poll-interval (seconden)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "switch": {
+      "pv_shutdown": { "name": "PV uitschakelen" },
+      "negative_price_charge": { "name": "Laden bij negatieve prijs" },
+      "zero_export": { "name": "Geen teruglevering" }
+    },
+    "sensor": {
+      "status": { "name": "Status" }
+    }
+  }
+}

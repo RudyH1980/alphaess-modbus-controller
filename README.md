@@ -10,8 +10,16 @@ the AlphaESS app won't let you do directly, over **local Modbus TCP** (no cloud)
    automatically the moment the controller stops.
 2. **Zero-export** — cap feed-in to the grid (e.g. 0%) on demand.
 
-It runs as a small Docker container next to Home Assistant. HA does the
-monitoring (use any AlphaESS integration); this just does the *control*.
+Two ways to run it:
+
+- **As a Home Assistant integration** (HACS) — runs inside HA, gives you three
+  switches (`PV Shutdown`, `Negative-price Charge`, `Zero Export`) + a status
+  sensor, all configured through the UI. **Recommended.**
+- **As a standalone Docker container** (`bridge.py`) — runs next to HA and reads
+  a few `input_boolean` helpers. Use this if you don't run HACS.
+
+Either way HA does the monitoring (use any AlphaESS integration); this just does
+the *control*.
 
 ## The key discovery
 
@@ -36,7 +44,28 @@ The active-power setpoint uses a **32000 offset** (`<32000` = charge,
     Frank Energie, Nordpool, EPEX, Tibber, ENTSO-e, …
 - Docker + Docker Compose on the same LAN as the inverter.
 
-## Install
+## Install — Home Assistant integration (HACS, recommended)
+
+1. **HACS → ⋮ → Custom repositories** → add
+   `https://github.com/RudyH1980/alphaess-modbus-controller`, category **Integration**.
+2. Install **AlphaESS Modbus Controller**, then **restart Home Assistant**.
+3. **Settings → Devices & Services → Add Integration → AlphaESS Modbus Controller**.
+4. Fill in the inverter IP/port/unit and pick your **SOC** and **price** sensors.
+
+You get a device with:
+
+| Entity | What it does |
+|---|---|
+| `switch.alphaess_pv_shutdown` | Force PV off now (curtail panels to 0 W). |
+| `switch.alphaess_negative_price_charge` | While PV is off, charge the battery from the grid. |
+| `switch.alphaess_zero_export` | Cap feed-in to 0%. |
+| `sensor.alphaess_status` | Current mode (`normal` / `pv_off` / `zero_export`) + price/SOC attributes. |
+
+PV also switches off **automatically** whenever the price sensor drops below the
+configured threshold — no automation needed. Thresholds are editable later via
+**Configure** (options) without re-adding the integration.
+
+## Install — standalone Docker container (alternative)
 
 ```bash
 git clone <this-repo> alphaess-bridge && cd alphaess-bridge
@@ -46,9 +75,9 @@ docker compose up -d --build
 docker compose logs -f
 ```
 
-### Optional Home Assistant helpers (toggles)
+### Optional Home Assistant helpers (toggles, Docker mode)
 
-The controller reads these if they exist (both default to "enabled" when absent):
+The container reads these if they exist (both default to "enabled" when absent):
 
 - `input_boolean.alphaess_zero_export` — turn zero-export on/off.
 - `input_boolean.alphaess_negative_price_mode` — master kill-switch for the
@@ -73,6 +102,18 @@ The controller reads these if they exist (both default to "enabled" when absent)
 | `NEG_BATTERY_POWER` | `2000` | W for charge/discharge |
 | `NEG_DISCHARGE_SOC_FLOOR` | `15` | Don't discharge below this SOC % |
 
+## What it does NOT do
+
+- It is **not** a monitoring/dashboard tool — Home Assistant already reads your
+  inverter; this only *writes* control commands.
+- It does **not** replace your normal battery strategy. Outside negative-price /
+  zero-export moments it leaves the inverter on its own self-consumption logic.
+- It does **not** touch the cloud, the AlphaESS app, or any installer settings —
+  pure local Modbus, nothing is unlocked or reflashed.
+- It will **not** keep PV off if it crashes or stops: the inverter restores PV by
+  itself when the dispatch ends, so a dead container can't strand you at 0 W.
+- It does **not** manage other loads (heat pumps, EV, etc.) — battery + PV only.
+
 ## Notes
 
 - This **writes control commands to your inverter** over Modbus — use at your own risk.
@@ -88,3 +129,23 @@ reactive power (×2), mode, SOC (0.4%/bit), time (×2, 1s/bit), flow direction,
 Register knowledge thanks to the AlphaESS community
 ([Alpha2MQTT](https://github.com/dxoverdy/Alpha2MQTT),
 [ha-alphaess-modbus](https://github.com/senalse/ha-alphaess-modbus)).
+
+---
+
+## Samenvatting (Nederlands)
+
+Een klein, zelfstandig Docker-containertje dat je **AlphaESS-omvormer lokaal via
+Modbus TCP** aanstuurt (geen cloud), voor twee dingen die de AlphaESS-app niet
+toelaat:
+
+1. **Negatieve-prijs-modus** — zakt je stroomprijs onder een drempel (bijv. < €0,00),
+   dan zet hij de **zonnepanelen uit** zodat je huis alles van het net trekt (je krijgt
+   bij negatieve prijzen betáald om te verbruiken) en houdt/laadt/ontlaadt de accu
+   optioneel. Stopt de controller, dan herstelt de omvormer de PV **vanzelf**.
+2. **Zero-export** — teruglevering aan het net begrenzen (bijv. 0%) op commando.
+
+Te installeren **als HACS-integratie** (draait in HA, geeft drie schakelaars +
+status-sensor, alles via de UI) óf als losse Docker-container. Home Assistant doet
+de monitoring, dit doet alléén de besturing. De kern is Modbus-register `0x088A`
+(PV-switch) — daarmee knijp je de panelen écht naar 0 W. Op hardware bewezen:
+PV van ~2000 W naar 0 W.

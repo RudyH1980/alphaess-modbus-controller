@@ -1,0 +1,51 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "AlphaESS Modbus Controller",
+        "description": "Connect to your AlphaESS inverter over local Modbus TCP. Modbus must be enabled on the inverter (wired Ethernet, port 502).",
+        "data": {
+          "host": "Inverter IP address",
+          "port": "Modbus TCP port",
+          "unit": "Modbus slave id",
+          "soc_sensor": "Battery State-of-Charge sensor (%)",
+          "price_sensor": "Electricity price sensor (€/kWh)",
+          "price_threshold": "Switch PV off below this price (€/kWh)",
+          "battery_mode": "Battery while PV is off",
+          "battery_power": "Charge/discharge power (W)",
+          "discharge_soc_floor": "Do not discharge below this SOC (%)",
+          "poll_interval": "Poll interval (seconds)"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "This inverter is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "AlphaESS Modbus Controller options",
+        "data": {
+          "price_sensor": "Electricity price sensor (€/kWh)",
+          "soc_sensor": "Battery State-of-Charge sensor (%)",
+          "price_threshold": "Switch PV off below this price (€/kWh)",
+          "battery_mode": "Battery while PV is off",
+          "battery_power": "Charge/discharge power (W)",
+          "discharge_soc_floor": "Do not discharge below this SOC (%)",
+          "poll_interval": "Poll interval (seconds)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "switch": {
+      "pv_shutdown": { "name": "PV Shutdown" },
+      "negative_price_charge": { "name": "Negative-price Charge" },
+      "zero_export": { "name": "Zero Export" }
+    },
+    "sensor": {
+      "status": { "name": "Status" }
+    }
+  }
+}
