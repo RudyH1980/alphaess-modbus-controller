@@ -21,6 +21,17 @@ Two ways to run it:
 Either way HA does the monitoring (use any AlphaESS integration); this just does
 the *control*.
 
+> ## ⚠️ Wired Ethernet only — Wi-Fi will NOT work
+>
+> This talks to the inverter over **local Modbus TCP**, which AlphaESS only
+> exposes on the **wired Ethernet (RJ45) port**. The **Wi-Fi / 4G dongle is a
+> cloud uplink only** — it uploads telemetry to AlphaCloud and does **not** serve
+> Modbus, so you can never reach port `502` through it.
+>
+> **Your inverter must be connected to your LAN with a network cable.** If it's
+> on Wi-Fi only, there is no local Modbus and nothing here can work — no setting
+> changes that. (This is AlphaESS firmware behaviour, not a limit of this project.)
+
 ## The key discovery
 
 AlphaESS exposes a **Dispatch PV Switch** at Modbus register **`0x088A`**
@@ -35,8 +46,10 @@ The active-power setpoint uses a **32000 offset** (`<32000` = charge,
 
 ## Requirements
 
-- AlphaESS inverter reachable by **wired Ethernet** with **Modbus TCP enabled**
-  (port 502; Modbus does not work over Wi-Fi). Firmware reasonably up to date.
+- AlphaESS inverter on your LAN by **wired Ethernet (RJ45)** with **Modbus TCP
+  enabled** (port 502). **Modbus does NOT work over the Wi-Fi/4G dongle** — that
+  dongle only talks to AlphaCloud (see the warning above). Firmware reasonably up
+  to date.
 - Home Assistant with:
   - a **long-lived access token**,
   - a sensor for the **battery State-of-Charge** (%),
@@ -149,6 +162,15 @@ toelaat:
    bij negatieve prijzen betáald om te verbruiken) en houdt/laadt/ontlaadt de accu
    optioneel. Stopt de controller, dan herstelt de omvormer de PV **vanzelf**.
 2. **Zero-export** — teruglevering aan het net begrenzen (bijv. 0%) op commando.
+
+> ### ⚠️ Alleen via bekabeld ethernet — wifi werkt NIET
+>
+> De besturing loopt over **lokaal Modbus TCP**, en AlphaESS stelt dat alléén
+> beschikbaar op de **bekabelde ethernetpoort (RJ45)**. De **wifi-/4G-dongle is
+> puur een cloud-uplink** (telemetrie naar AlphaCloud) en serveert géén Modbus —
+> poort `502` is daar nooit bereikbaar. **De inverter moet dus met een
+> netwerkkabel aan je LAN hangen.** Alleen-wifi = geen lokale Modbus = niks
+> werkt. Dit is firmware-gedrag van AlphaESS, geen beperking van dit project.
 
 Te installeren **als HACS-integratie** (draait in HA, geeft drie schakelaars +
 status-sensor, alles via de UI) óf als losse Docker-container. Home Assistant doet

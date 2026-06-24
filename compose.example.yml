@@ -3,6 +3,10 @@
 # status sensor, no long-lived token needed). Use this container only if you
 # don't run HACS or want it fully outside HA. See README.md.
 #
+# ⚠️ WIRED ETHERNET ONLY — the inverter must be on your LAN by network cable.
+#    Modbus TCP (:502) is only served on the RJ45 port; the Wi-Fi/4G dongle is a
+#    cloud uplink and does NOT serve Modbus. Wi-Fi-only = nothing here works.
+#
 # Copy this to docker-compose.yml and fill in your own values.
 #   cp compose.example.yml docker-compose.yml
 # Then: docker compose up -d --build
