@@ -1,13 +1,13 @@
 {
   "domain": "alphaess_controller",
   "name": "AlphaESS Modbus Controller",
-  "version": "1.0.0",
-  "documentation": "https://github.com/RudyH1980/alphaess-modbus-controller",
-  "issue_tracker": "https://github.com/RudyH1980/alphaess-modbus-controller/issues",
   "codeowners": ["@RudyH1980"],
   "config_flow": true,
-  "iot_class": "local_polling",
-  "integration_type": "device",
   "dependencies": [],
-  "requirements": ["pymodbus>=3.0.0"]
+  "documentation": "https://github.com/RudyH1980/alphaess-modbus-controller",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/RudyH1980/alphaess-modbus-controller/issues",
+  "requirements": ["pymodbus>=3.0.0"],
+  "version": "1.0.0"
 }
