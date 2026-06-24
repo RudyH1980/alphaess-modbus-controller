@@ -16,11 +16,11 @@ from .const import (
 )
 from .coordinator import AlphaessCoordinator
 
-# key -> (friendly name, icon)
+# translation_key -> icon
 SWITCHES = {
-    SWITCH_PV_SHUTDOWN: ("PV Shutdown", "mdi:solar-power-variant-outline"),
-    SWITCH_NEG_CHARGE: ("Negative-price Charge", "mdi:battery-charging-high"),
-    SWITCH_ZERO_EXPORT: ("Zero Export", "mdi:transmission-tower-off"),
+    SWITCH_PV_SHUTDOWN: "mdi:solar-power-variant-outline",
+    SWITCH_NEG_CHARGE: "mdi:battery-charging-high",
+    SWITCH_ZERO_EXPORT: "mdi:transmission-tower-off",
 }
 
 
@@ -30,8 +30,8 @@ async def async_setup_entry(
     """Set up the control switches."""
     coordinator: AlphaessCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities(
-        AlphaessSwitch(coordinator, entry, key, name, icon)
-        for key, (name, icon) in SWITCHES.items()
+        AlphaessSwitch(coordinator, entry, key, icon)
+        for key, icon in SWITCHES.items()
     )
 
 
@@ -40,17 +40,18 @@ class AlphaessSwitch(SwitchEntity, RestoreEntity):
 
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator, entry, key, name, icon) -> None:
+    def __init__(self, coordinator, entry, key, icon) -> None:
         self._coordinator = coordinator
         self._key = key
-        self._attr_name = name
+        self._attr_translation_key = key
         self._attr_icon = icon
         self._attr_unique_id = f"{entry.entry_id}_{key}"
         self._attr_is_on = False
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
-            name="AlphaESS Modbus Controller",
+            name="AlphaESS",
             manufacturer="AlphaESS",
+            model="Modbus Controller",
         )
 
     async def async_added_to_hass(self) -> None:

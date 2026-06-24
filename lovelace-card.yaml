@@ -1,0 +1,34 @@
+# AlphaESS Modbus Controller — ready-made Lovelace card.
+# Dashboard -> Edit -> Add card -> Manual -> paste this. Only built-in cards, no
+# custom resources needed. If your entity ids differ, pick them in the visual editor.
+type: vertical-stack
+cards:
+  - type: entities
+    title: AlphaESS — Battery control
+    show_header_toggle: false
+    entities:
+      - entity: switch.alphaess_pv_shutdown
+        name: PV shutdown
+      - entity: switch.alphaess_negative_price_charge
+        name: Charge on negative price
+      - entity: switch.alphaess_zero_export
+        name: Zero export
+      - type: divider
+      - entity: sensor.alphaess_status
+        name: Status
+      - type: attribute
+        entity: sensor.alphaess_status
+        attribute: price
+        name: Electricity price (€/kWh)
+      - type: attribute
+        entity: sensor.alphaess_status
+        attribute: soc
+        name: Battery SOC (%)
+      - type: attribute
+        entity: sensor.alphaess_status
+        attribute: battery
+        name: Battery mode
+      - type: attribute
+        entity: sensor.alphaess_status
+        attribute: trigger
+        name: Triggered by

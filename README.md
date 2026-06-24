@@ -65,6 +65,12 @@ PV also switches off **automatically** whenever the price sensor drops below the
 configured threshold — no automation needed. Thresholds are editable later via
 **Configure** (options) without re-adding the integration.
 
+### Dashboard card
+
+A ready-made Lovelace card lives in [`lovelace-card.yaml`](lovelace-card.yaml)
+(built-in cards only). **Dashboard → Edit → Add card → Manual** and paste it —
+you get the three switches plus the status sensor with price/SOC attributes.
+
 ## Install — standalone Docker container (alternative)
 
 ```bash

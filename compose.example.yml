@@ -1,3 +1,8 @@
+# Standalone Docker bridge — the ALTERNATIVE to the HACS integration.
+# If you run HACS, prefer the Home Assistant integration (UI config, switches +
+# status sensor, no long-lived token needed). Use this container only if you
+# don't run HACS or want it fully outside HA. See README.md.
+#
 # Copy this to docker-compose.yml and fill in your own values.
 #   cp compose.example.yml docker-compose.yml
 # Then: docker compose up -d --build

@@ -24,7 +24,7 @@ class AlphaessStatusSensor(CoordinatorEntity, SensorEntity):
     """Reports what the controller is currently doing (normal / pv_off / zero_export)."""
 
     _attr_has_entity_name = True
-    _attr_name = "Status"
+    _attr_translation_key = "status"
     _attr_icon = "mdi:solar-power"
 
     def __init__(self, coordinator: AlphaessCoordinator, entry: ConfigEntry) -> None:
@@ -32,8 +32,9 @@ class AlphaessStatusSensor(CoordinatorEntity, SensorEntity):
         self._attr_unique_id = f"{entry.entry_id}_status"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
-            name="AlphaESS Modbus Controller",
+            name="AlphaESS",
             manufacturer="AlphaESS",
+            model="Modbus Controller",
         )
 
     @property
