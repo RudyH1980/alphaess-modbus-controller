@@ -73,12 +73,10 @@ The controller reads these if they exist (both default to "enabled" when absent)
 | `NEG_BATTERY_POWER` | `2000` | W for charge/discharge |
 | `NEG_DISCHARGE_SOC_FLOOR` | `15` | Don't discharge below this SOC % |
 
-## ⚠️ Safety
+## Notes
 
-- This **writes control commands to your battery inverter**. Use at your own risk.
-- Discharging the battery **to the grid** at negative prices can **cost** money and
-  may affect your **warranty** and feed-in tariff. The default (`neutral`) never
-  exports — it only stops the panels and lets the house import.
+- This **writes control commands to your inverter** over Modbus — use at your own risk.
+- The default (`neutral` / `charge`) never exports: it stops the panels and lets the house import.
 - AlphaESS allows **one Modbus TCP connection at a time** — don't run two clients.
 
 ## Register reference
