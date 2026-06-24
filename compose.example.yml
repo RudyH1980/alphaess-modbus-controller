@@ -1,0 +1,29 @@
+# Copy this to docker-compose.yml and fill in your own values.
+#   cp compose.example.yml docker-compose.yml
+# Then: docker compose up -d --build
+services:
+  alphaess-bridge:
+    build: .
+    container_name: alphaess-bridge
+    restart: unless-stopped
+    network_mode: host          # needs LAN access to the inverter on :502
+    environment:
+      # ── Inverter (Modbus TCP) ──
+      - ALPHAESS_HOST=192.168.1.xx        # IP of your AlphaESS inverter (wired/LAN)
+      - ALPHAESS_PORT=502
+      - ALPHAESS_UNIT=85                  # AlphaESS default Modbus slave id
+      # ── Home Assistant ──
+      - HA_URL=http://127.0.0.1:8123
+      - HA_TOKEN=PUT_YOUR_LONG_LIVED_TOKEN_HERE
+      - POLL_INTERVAL=60
+      - HA_SOC_SENSOR=sensor.your_battery_soc          # battery State-of-Charge (%)
+      # ── Zero-export (optional; toggle via input_boolean.alphaess_zero_export) ──
+      - DEFAULT_ZERO_EXPORT=false
+      # ── Negative-price mode: PV OFF + import when price < threshold ──
+      - NEG_PRICE_ENABLED=true
+      - NEG_PRICE_SENSOR=sensor.your_current_electricity_market_price   # €/kWh, can go negative
+      - NEG_PRICE_THRESHOLD=0.0
+      - NEG_BATTERY_MODE=neutral          # neutral | charge | discharge
+      - NEG_BATTERY_POWER=2000            # W, used for charge/discharge
+      - NEG_DISCHARGE_SOC_FLOOR=15        # %, do not discharge below this
+      - TZ=Europe/Amsterdam

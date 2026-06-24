@@ -1,0 +1,6 @@
+# Your real config holds secrets (HA token) — never commit it.
+docker-compose.yml
+.env
+*.bak*
+__pycache__/
+*.pyc
