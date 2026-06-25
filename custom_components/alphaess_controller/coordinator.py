@@ -92,7 +92,16 @@ class AlphaessCoordinator(DataUpdateCoordinator):
         await self.async_request_refresh()
 
     async def _async_update_data(self):
-        soc = self._read_float(self.soc_sensor)
+        # Read all measurements locally over Modbus first. SOC for the control
+        # logic now comes from the inverter itself; the optional cloud SOC
+        # sensor is only a fallback if the Modbus read fails.
+        measurements = await self.hass.async_add_executor_job(
+            self.modbus.read_measurements
+        )
+        if measurements and measurements.get("battery_soc") is not None:
+            soc = float(measurements["battery_soc"])
+        else:
+            soc = self._read_float(self.soc_sensor)
         price = self._read_float(self.price_sensor)
 
         pv_off_switch = self.switch_state[SWITCH_PV_SHUTDOWN]
@@ -134,5 +143,10 @@ class AlphaessCoordinator(DataUpdateCoordinator):
             }
 
         self._was_pv_off = pv_off
+        if measurements:
+            status["measurements"] = measurements
+            status["soc_source"] = "modbus"
+        else:
+            status["soc_source"] = "cloud" if self.soc_sensor else "none"
         _LOGGER.debug("cycle: %s", status)
         return status
