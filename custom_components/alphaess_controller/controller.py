@@ -104,6 +104,8 @@ class AlphaessModbus:
             ppv2 = self._read(client, REG_PPV2, 2)
             ppv3 = self._read(client, REG_PPV3, 2)
             ppv4 = self._read(client, REG_PPV4, 2)
+            # Dispatch-blok (0x0880..0x088B): bewaking tegen vreemde dispatch die PV uitzet.
+            disp = self._read(client, REG_DISPATCH_START, 0x0C)
 
             for r in (grid, batt, ppv_t, ppv1, ppv2, ppv3, ppv4):
                 if r is None or r.isError():
@@ -145,6 +147,12 @@ class AlphaessModbus:
                 "battery_soc": soc,
                 "load": load,
             }
+            if disp is not None and not disp.isError() and len(disp.registers) >= 11:
+                dr = disp.registers
+                data["dispatch_active"] = int(dr[0])
+                data["dispatch_power"] = self._u32(dr, 1) - POWER_OFFSET  # <0 = laden
+                data["dispatch_mode"] = int(dr[5])
+                data["dispatch_pv_switch"] = int(dr[10])  # 2 = PV uit
             _LOGGER.debug("measurements: %s", data)
             return data
         finally:
@@ -174,6 +182,30 @@ class AlphaessModbus:
             self._write(client, REG_DISPATCH_START, [1])  # PV switch only acts while active
             self._write(client, REG_PV_SWITCH, [2])       # re-assert PV OFF
             _LOGGER.debug("PV OFF applied, battery=%s power_word=%s", mode, power)
+            return True
+        finally:
+            client.close()
+
+    def grid_charge(self, power_w: int, target_soc_pct: float) -> bool:
+        """Accu uit het net laden via dispatch, met PV AAN (0x088A=1).
+
+        Zelfde blok als de AlphaESS-cloud gebruikt (mode 2, negatief vermogen =
+        laden), maar met PV-schakelaar 1 zodat de panelen blijven meeleveren.
+        Duur 300 s: valt vanzelf terug naar normaal als HA wegvalt; de
+        coordinator schrijft dit elke poll opnieuw zolang de switch aan staat.
+        """
+        power_w = max(0, min(int(power_w), POWER_OFFSET))
+        soc_word = max(0, min(250, int(round(float(target_soc_pct) * 2.5))))  # 0.4 %/bit
+        client = self._connect()
+        if not client:
+            _LOGGER.warning("Modbus connect failed (%s:%s)", self._host, self._port)
+            return False
+        try:
+            block = [0, POWER_OFFSET - power_w, 0, POWER_OFFSET, 2, soc_word, 0, 300, 0, 1]
+            self._write(client, REG_DISPATCH_BLOCK, block)
+            self._write(client, REG_DISPATCH_START, [1])
+            self._write(client, REG_PV_SWITCH, [1])  # PV expliciet AAN
+            _LOGGER.debug("Grid charge dispatch: %s W, target SOC %s%%", power_w, target_soc_pct)
             return True
         finally:
             client.close()

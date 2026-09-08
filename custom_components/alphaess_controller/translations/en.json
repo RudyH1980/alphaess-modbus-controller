@@ -42,7 +42,9 @@
     "switch": {
       "pv_shutdown": { "name": "PV Shutdown" },
       "negative_price_charge": { "name": "Negative-price Charge" },
-      "zero_export": { "name": "Zero Export" }
+      "zero_export": { "name": "Zero Export" },
+      "pv_guard": { "name": "PV Guard (block foreign dispatch)" },
+      "grid_charge": { "name": "Grid Charge (local, PV stays on)" }
     },
     "sensor": {
       "status": { "name": "Status" }
