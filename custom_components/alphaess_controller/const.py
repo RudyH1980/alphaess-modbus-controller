@@ -38,6 +38,10 @@ POWER_OFFSET = 32000          # active power: <offset = charge, >offset = discha
 SWITCH_PV_SHUTDOWN = "pv_shutdown"
 SWITCH_NEG_CHARGE = "negative_price_charge"
 SWITCH_ZERO_EXPORT = "zero_export"
+SWITCH_PV_GUARD = "pv_guard"
+SWITCH_GRID_CHARGE = "grid_charge"  # accu lokaal uit net laden via dispatch, PV blijft AAN
+HELPER_GRID_CHARGE_POWER = "input_number.accu_laadvermogen_w"  # Rudy bedient dit
+HELPER_TARGET_SOC = "input_number.daily_charge_target_soc"  # stop vreemde (cloud/VPP) dispatch die PV uitzet
 
 # --- Measurement (read-only) holding registers, verified vs cloud 2026-06-25 ---
 # All read via function-code 3 (holding registers), 32-bit big-endian (high word

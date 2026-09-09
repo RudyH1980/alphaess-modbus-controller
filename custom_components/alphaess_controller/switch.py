@@ -10,7 +10,9 @@ from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import (
     DOMAIN,
+    SWITCH_GRID_CHARGE,
     SWITCH_NEG_CHARGE,
+    SWITCH_PV_GUARD,
     SWITCH_PV_SHUTDOWN,
     SWITCH_ZERO_EXPORT,
 )
@@ -21,6 +23,8 @@ SWITCHES = {
     SWITCH_PV_SHUTDOWN: "mdi:solar-power-variant-outline",
     SWITCH_NEG_CHARGE: "mdi:battery-charging-high",
     SWITCH_ZERO_EXPORT: "mdi:transmission-tower-off",
+    SWITCH_PV_GUARD: "mdi:shield-sun",
+    SWITCH_GRID_CHARGE: "mdi:battery-arrow-up",
 }
 
 
@@ -46,7 +50,7 @@ class AlphaessSwitch(SwitchEntity, RestoreEntity):
         self._attr_translation_key = key
         self._attr_icon = icon
         self._attr_unique_id = f"{entry.entry_id}_{key}"
-        self._attr_is_on = False
+        self._attr_is_on = key == SWITCH_PV_GUARD  # bewaking staat standaard aan
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
             name="AlphaESS",

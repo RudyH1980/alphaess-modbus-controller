@@ -42,7 +42,9 @@
     "switch": {
       "pv_shutdown": { "name": "PV uitschakelen" },
       "negative_price_charge": { "name": "Laden bij negatieve prijs" },
-      "zero_export": { "name": "Geen teruglevering" }
+      "zero_export": { "name": "Geen teruglevering" },
+      "pv_guard": { "name": "PV-bewaking (vreemde dispatch stoppen)" },
+      "grid_charge": { "name": "Accu laden uit net" }
     },
     "sensor": {
       "status": { "name": "Status" }
