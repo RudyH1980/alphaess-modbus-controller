@@ -6,6 +6,7 @@ from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.util import dt as dt_util
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
@@ -29,6 +30,13 @@ from .const import (
     DOMAIN,
     SWITCH_NEG_CHARGE,
     SWITCH_PV_SHUTDOWN,
+    HELPER_GRID_CHARGE_POWER,
+    HELPER_TARGET_SOC,
+    HELPER_DISCHARGE_FLOOR,
+    HELPER_DISCHARGE_POWER,
+    SWITCH_GRID_CHARGE,
+    SWITCH_GRID_DISCHARGE,
+    SWITCH_PV_GUARD,
     SWITCH_ZERO_EXPORT,
 )
 from .controller import AlphaessModbus
@@ -62,7 +70,14 @@ class AlphaessCoordinator(DataUpdateCoordinator):
             SWITCH_PV_SHUTDOWN: False,
             SWITCH_NEG_CHARGE: False,
             SWITCH_ZERO_EXPORT: False,
+            SWITCH_PV_GUARD: True,  # default aan: PV moet altijd doorlopen (Rudy 2026-09-07)
+            SWITCH_GRID_CHARGE: False,
+            SWITCH_GRID_DISCHARGE: False,
         }
+        self._was_grid_charge = False
+        self._was_grid_discharge = False
+        self._guard_stops = 0
+        self._guard_last = None
         self._was_pv_off = False
         self._prev_zero_export = None
 
@@ -127,19 +142,69 @@ class AlphaessCoordinator(DataUpdateCoordinator):
         else:
             if self._was_pv_off:
                 await self.hass.async_add_executor_job(self.modbus.dispatch_stop)
+            # Feed-in eerst (set_feedin stopt dispatch), daarna pas grid-charge dispatch.
             zero = self.switch_state[SWITCH_ZERO_EXPORT]
             if zero != self._prev_zero_export:
                 await self.hass.async_add_executor_job(
                     self.modbus.set_feedin, 0 if zero else 100
                 )
                 self._prev_zero_export = zero
+            grid_charge_on = self.switch_state[SWITCH_GRID_CHARGE]
+            discharge_on = self.switch_state[SWITCH_GRID_DISCHARGE] and not grid_charge_on
+            if discharge_on:
+                # Prijspiek: accu levert aan huis en net. PV blijft aan.
+                dp = self._read_float(HELPER_DISCHARGE_POWER) or float(self.battery_power)
+                floor = self._read_float(HELPER_DISCHARGE_FLOOR)
+                if floor is None:
+                    floor = self.discharge_floor
+                await self.hass.async_add_executor_job(
+                    self.modbus.grid_discharge, int(dp), soc, floor
+                )
+            elif self._was_grid_discharge:
+                await self.hass.async_add_executor_job(self.modbus.dispatch_stop)
+                _LOGGER.info("Ontladen naar net gestopt -> self-consumption")
+            self._was_grid_discharge = discharge_on
+            if grid_charge_on:
+                # Lokaal uit net laden, PV blijft aan. Elke poll opnieuw (dispatch-duur 300 s).
+                power = self._read_float(HELPER_GRID_CHARGE_POWER) or float(self.battery_power)
+                target = self._read_float(HELPER_TARGET_SOC) or 100.0
+                await self.hass.async_add_executor_job(
+                    self.modbus.grid_charge, int(power), target
+                )
+            elif self._was_grid_charge:
+                await self.hass.async_add_executor_job(self.modbus.dispatch_stop)
+                _LOGGER.info("Grid charge gestopt -> self-consumption")
+            self._was_grid_charge = grid_charge_on
+            # Bewaking: ELKE dispatch die niet van ons is (cloud/VPP/app stuurt die per
+            # kwartier: PV uit, 10 kW laden, of 8 kW ontladen naar net) direct stoppen.
+            # Wij sturen zelf alleen via pv_off of grid_charge, en dan komen we hier niet.
+            if (
+                not grid_charge_on
+                and not discharge_on
+                and self.switch_state[SWITCH_PV_GUARD]
+                and measurements
+                and measurements.get("dispatch_active") == 1
+            ):
+                ok = await self.hass.async_add_executor_job(self.modbus.dispatch_stop)
+                self._guard_stops += 1
+                self._guard_last = dt_util.now().isoformat(timespec="seconds")
+                _LOGGER.warning(
+                    "PV-bewaking: vreemde dispatch gestopt (PV-switch=%s, power=%s W, mode=%s, ok=%s)",
+                    measurements.get("dispatch_pv_switch"),
+                    measurements.get("dispatch_power"),
+                    measurements.get("dispatch_mode"),
+                    ok,
+                )
             status = {
-                "mode": "zero_export" if zero else "normal",
+                "mode": "grid_charge" if grid_charge_on else ("grid_discharge" if discharge_on else ("zero_export" if zero else "normal")),
                 "pv": "on",
-                "battery": "self_consumption",
+                "battery": "grid_charge" if grid_charge_on else ("discharge_to_grid" if discharge_on else "self_consumption"),
                 "trigger": "none",
                 "price": price,
                 "soc": soc,
+                "pv_guard": self.switch_state[SWITCH_PV_GUARD],
+                "pv_guard_stops": self._guard_stops,
+                "pv_guard_last_stop": self._guard_last,
             }
 
         self._was_pv_off = pv_off
